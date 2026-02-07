@@ -1,0 +1,98 @@
+# Markdown Projects
+
+A CLI tool that stores your entire project — issues, milestones, docs — as plain markdown files in a `.mdp/` folder. No database, no server. Just files on disk that you can read, edit, and commit with git.
+
+## All Data is Stored Locally as Files
+
+```
+project-root/
+└── .mdp/
+    ├── project.json
+    ├── issues/
+    │   ├── ISS-1-add-authentication/
+    │   │   └── ISS-1-add-authentication.md
+    │   └── ISS-2-database-schema/
+    │       └── ISS-2-database-schema.md
+    ├── milestones/
+    │   └── M-1-v1-release/
+    │       └── M-1-v1-release.md
+    ├── docs/
+    └── templates/
+```
+
+Each issue and milestone lives in its own folder. The folder can hold extra files — screenshots, design docs, logs — alongside the main markdown file.
+
+## What's in a File
+
+Every issue is a markdown file with YAML frontmatter for structured fields and a free-form body:
+
+```markdown
+---
+id: ISS-2
+title: Implement JWT tokens
+type: task
+status: In Progress
+priority: High
+labels:
+  - backend
+  - security
+assignee: agent-1
+milestone: M-1
+checklist:
+  - text: Access token generation
+    done: true
+  - text: Refresh token rotation
+    done: false
+---
+
+Implement JWT-based authentication with access and refresh tokens.
+```
+
+See [Issues](/issues) for the full field reference, file naming rules, and all commands. [Milestones](/milestones) follow the same structure — grouping issues toward a shared goal.
+
+## Designed for AI Agents
+
+The CLI is non-interactive. All input comes from flags and stdin, all output is structured JSON. This makes it ideal for AI agents and automation that need to manage project state programmatically.
+
+- **Markdown is the source of truth.** All project state lives in `.mdp/` as human-readable files.
+- **Git-compatible by design.** File-per-issue storage means clean diffs, meaningful merge conflicts, and natural branch-based workflows.
+- **Convention over configuration.** [Presets](/global-config#presets) populate your [configuration](/project-config) at project creation, so you can start immediately.
+
+## JSON Output
+
+All commands return a JSON envelope:
+
+```json
+// Success
+{
+  "ok": true,
+  "data": { ... },
+  "warnings": []
+}
+
+// Error (written to stderr)
+{
+  "ok": false,
+  "error": {
+    "code": "ISSUE_NOT_FOUND",
+    "message": "Issue ISS-42 not found",
+    "details": { "id": "ISS-42" }
+  }
+}
+```
+
+The `warnings` array contains non-fatal issues. Table format is available via `--format table`.
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0`  | Success |
+| `1`  | General error (invalid input, file not found, etc.) |
+| `2`  | Project not found (no `.mdp/` directory) |
+
+## Command Groups
+
+- **[Projects](/projects)** — `project create`, `add`, `list`, `remove`, `tag`, `settings`, `stats`, `fix`
+- **[Issues](/issues)** — `issue create`, `list`, `get`, `update`, `delete`, `log {add,list,get,update,delete}`, `batch-create`, `batch-update`
+- **[Milestones](/milestones)** — `milestone create`, `list`, `get`, `update`, `delete`, `progress`, `log {add,list,get,update,delete}`

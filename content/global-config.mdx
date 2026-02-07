@@ -1,0 +1,251 @@
+# Global Config
+
+Global configuration lives at `~/.mdp/config.json`. This file stores your project registry, custom presets, and default preferences.
+
+## Complete config.json
+
+```json
+{
+  "projects": [
+    { "path": "/home/user/myapp", "tags": ["work", "backend"] },
+    { "path": "/home/user/blog", "tags": ["personal"] },
+    { "path": "/home/user/design-system", "tags": ["work", "frontend"] }
+  ],
+  "presets": {
+    "my-team": {
+      "issues": {
+        "prefix": "TEAM",
+        "statuses": {
+          "triage": [],
+          "backlog": [{ "name": "Backlog", "description": "Not yet triaged" }],
+          "unstarted": [{ "name": "To Do", "description": "Ready to be worked on" }],
+          "started": [{ "name": "In Progress", "description": "Actively being worked on" }],
+          "completed": [{ "name": "Done", "description": "Work completed" }],
+          "canceled": []
+        },
+        "priorities": [
+          { "name": "None", "description": "No priority assigned" },
+          { "name": "Low", "description": "Low priority" },
+          { "name": "Medium", "description": "Medium priority" },
+          { "name": "High", "description": "High priority" },
+          { "name": "Urgent", "description": "Requires immediate attention" }
+        ],
+        "labels": [
+          { "name": "frontend", "description": "Frontend related" },
+          { "name": "backend", "description": "Backend related" },
+          { "name": "infra", "description": "Infrastructure / DevOps" },
+          { "name": "testing", "description": "Test coverage" }
+        ],
+        "types": [
+          { "name": "task", "description": "General work item" },
+          { "name": "bug", "description": "Something broken" },
+          { "name": "feature", "description": "New functionality" },
+          { "name": "chore", "description": "Maintenance, refactoring" }
+        ]
+      },
+      "milestones": {
+        "prefix": "M",
+        "statuses": {
+          "backlog": [],
+          "planned": [{ "name": "Planning", "description": "Defining scope and goals" }],
+          "in_progress": [
+            { "name": "Active", "description": "In progress" },
+            { "name": "On Hold", "description": "Temporarily paused" }
+          ],
+          "completed": [{ "name": "Completed", "description": "All goals met" }],
+          "canceled": []
+        },
+        "priorities": [
+          { "name": "None", "description": "No priority assigned" },
+          { "name": "Low", "description": "Low priority" },
+          { "name": "Medium", "description": "Medium priority" },
+          { "name": "High", "description": "High priority" },
+          { "name": "Urgent", "description": "Requires immediate attention" }
+        ],
+        "labels": [
+          { "name": "frontend", "description": "Frontend related" },
+          { "name": "backend", "description": "Backend related" },
+          { "name": "infra", "description": "Infrastructure / DevOps" },
+          { "name": "testing", "description": "Test coverage" }
+        ]
+      }
+    }
+  },
+  "defaults": {
+    "preset": "my-team",
+    "format": "json"
+  }
+}
+```
+
+## Project Registry
+
+The `projects` array tracks all known projects on your machine.
+
+| Field | Description |
+|-------|-------------|
+| `path` | Absolute path to the project root (the directory containing `.mdp/`) |
+| `tags` | String array for organizing and filtering projects |
+
+Projects are managed by the CLI:
+
+```bash copy
+mdp project add <path> --tags "work,backend"   # Register a project
+mdp project list --tag work                     # List projects filtered by tag
+mdp project remove <path>                       # Unregister a project
+mdp project tag <path> --add "v2" --remove "v1" # Manage tags
+```
+
+Projects are automatically registered when created with `mdp project create`.
+
+Example output of `mdp project list --tag work`:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "projects": [
+      { "path": "/home/user/myapp", "tags": ["work", "backend"] },
+      { "path": "/home/user/design-system", "tags": ["work", "frontend"] }
+    ]
+  }
+}
+```
+
+## Presets
+
+A preset is a **one-time configuration template** used at project creation. When you run `mdp project create --preset <name>`, the preset's values are written to `.mdp/project.json`. After that, the preset has no further effect — the project's `project.json` is self-contained and can be edited directly.
+
+### Available Presets
+
+| Preset | Issue Prefix | Domain |
+|--------|-------------|--------|
+| `software` | `ISS` | Default — software development |
+| `marketing` | `MKT` | Campaign-focused types and labels |
+| `design` | `DES` | Design workflow types |
+| `product` | `PRD` | Product management types |
+| `social-media` | `SOC` | Social media content management |
+| `generic` | `ISS` | Minimal defaults |
+
+```bash copy
+mdp project create -p . --preset software       # Default
+mdp project create -p . --preset marketing
+mdp project create -p . --preset design
+mdp project create -p . --preset product
+mdp project create -p . --preset social-media
+mdp project create -p . --preset generic
+```
+
+### Preset Comparison
+
+#### Types
+
+| Preset | Types |
+|--------|-------|
+| `software` | `task`, `bug`, `feature`, `chore`, `spike` |
+| `marketing` | `campaign`, `content`, `email`, `social`, `analysis` |
+| `design` | `design`, `review`, `research`, `prototype`, `asset` |
+| `product` | `feature`, `research`, `experiment`, `feedback`, `spec` |
+| `social-media` | `post`, `story`, `campaign`, `engagement`, `analysis` |
+| `generic` | `task`, `milestone-task`, `review` |
+
+#### Labels
+
+| Preset | Labels |
+|--------|--------|
+| `software` | `bug`, `enhancement`, `documentation`, `security`, `frontend`, `backend` |
+| `marketing` | `seo`, `paid`, `organic`, `brand`, `copy`, `design` |
+| `design` | `ui`, `ux`, `branding`, `illustration`, `motion` |
+| `product` | `mvp`, `growth`, `retention`, `onboarding`, `mobile`, `web` |
+| `social-media` | `instagram`, `twitter`, `linkedin`, `tiktok`, `youtube`, `facebook` |
+| `generic` | `urgent`, `documentation`, `question` |
+
+All presets share the same statuses and priorities. See [Project Config — Statuses](/project-config#statuses) for details.
+
+### Custom ID Prefixes
+
+Override the default ID prefixes when creating a project:
+
+```bash copy
+mdp project create -p . --issue-prefix TASK --milestone-prefix EPIC
+```
+
+This produces IDs like `TASK-1`, `EPIC-1` instead of the defaults `ISS-1`, `M-1`.
+
+With custom prefixes, the directory structure looks like:
+
+```
+.mdp/issues/
+├── TASK-1-user-auth/
+│   └── TASK-1-user-auth.md
+└── TASK-2-database/
+    └── TASK-2-database.md
+```
+
+The prefixes are stored in `.mdp/project.json` and used for all subsequent issue and milestone creation.
+
+> **Important:** Prefixes are embedded in every file and folder name. Once a project is created, the prefix cannot be changed without renaming all existing files.
+
+## Custom Presets
+
+The `presets` object in `~/.mdp/config.json` lets you define custom presets alongside the built-in ones. Each preset must contain the full `issues` and `milestones` objects — same schema as the `issues` and `milestones` sections of [project.json](/project-config).
+
+Custom presets are available when creating projects:
+
+```bash copy
+mdp project create -p . --preset my-team
+```
+
+If a custom preset has the same name as a built-in preset, the custom one takes priority.
+
+### Default Preset
+
+Set the default preset in `~/.mdp/config.json` so you don't need to specify `--preset` every time:
+
+```json
+{
+  "defaults": {
+    "preset": "my-team"
+  }
+}
+```
+
+## Defaults
+
+The `defaults` object sets global preferences:
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `preset` | `"software"` | Default preset for `mdp project create` when `--preset` is not specified |
+| `format` | `"json"` | Default output format when `-f` is not specified |
+
+JSON output (default):
+
+```json
+{
+  "ok": true,
+  "data": {
+    "id": "ISS-1",
+    "title": "User authentication",
+    "status": "Backlog"
+  }
+}
+```
+
+Table output (`--format table` or `defaults.format: "table"`):
+
+```
+ID        Title                  Status
+ISS-1   User authentication    Backlog
+ISS-2   Database schema        In Progress
+ISS-3   Write tests            To Do
+```
+
+## Which Commands Use What
+
+| Section | Commands |
+|---------|----------|
+| `projects` | `project add`, `project list`, `project remove`, `project tag`, `project create` (auto-registers) |
+| `presets` | `project create --preset <name>` |
+| `defaults.preset` | `project create` (when `--preset` is omitted) |
+| `defaults.format` | All commands (when `-f` is omitted) |

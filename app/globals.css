@@ -1,0 +1,18 @@
+:root, :host {
+  /* Red primary color */
+  --nextra-primary-hue: 0;
+  --nextra-primary-saturation: 84%;
+  --nextra-primary-lightness: 44%;
+
+  /* White background */
+  --nextra-bg: 255, 255, 255;
+
+  /* Fonts */
+  --x-font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --x-font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+.dark {
+  /* Near-black background */
+  --nextra-bg: 10, 10, 10;
+}

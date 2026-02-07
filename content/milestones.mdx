@@ -1,0 +1,337 @@
+# Milestones
+
+Milestones group issues toward a goal. Like issues, each milestone is a markdown file with YAML frontmatter.
+
+## Frontmatter Fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `id` | `string` | Auto-generated | Unique identifier (e.g., `M-1`) |
+| `title` | `string` | — | Milestone title |
+| `status` | `string` | First status in config | Workflow stage (validated against config) |
+| `priority` | `string \| null` | `null` | Urgency level (validated against config when provided) |
+| `labels` | `string[]` | `[]` | Tags for filtering (validated against config) |
+| `startDate` | `string \| null` | `null` | ISO 8601 date |
+| `dueDate` | `string \| null` | `null` | ISO 8601 date |
+| `checklist` | `object[]` | `[]` | Milestone goals (`{text, done}`) |
+| `log` | `object[]` | `[]` | Activity log (`{timestamp, author, body}`) |
+| `createdAt` | `string` | Auto-generated | ISO 8601 timestamp |
+| `updatedAt` | `string` | Auto-generated | ISO 8601 timestamp |
+
+## Example Milestone File
+
+```markdown
+---
+id: M-1
+title: "v1.0 — Core features"
+status: Active
+priority: High
+labels: []
+startDate: 2025-03-01
+dueDate: 2025-04-01
+checklist:
+  - text: Authentication module
+    done: true
+  - text: API endpoints
+    done: false
+log:
+  - timestamp: "2025-03-01T10:00:00.000Z"
+    author: agent-1
+    body: Milestone created. Target is end of Q1.
+createdAt: 2025-03-01T10:00:00.000Z
+updatedAt: 2025-03-15T08:00:00.000Z
+---
+
+## Goals
+
+Ship the core feature set: authentication, API, and basic UI.
+```
+
+File naming follows the same convention as issues — see [Issues > File Naming](/issues#file-naming) for details.
+
+## Create Milestone
+
+```bash copy
+mdp milestone create -t "Milestone title"
+```
+
+Create a new milestone.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--title` | `-t` | **required** | Milestone title |
+| `--status` | `-s` | First status in config | Initial status |
+| `--priority` | | `null` | Priority level |
+| `--labels` | `-l` | `[]` | Comma-separated labels |
+| `--start-date` | | `null` | Start date (YYYY-MM-DD) |
+| `--due-date` | | `null` | Due date (YYYY-MM-DD) |
+| `--checklist` | | `[]` | Comma-separated goals/deliverables (all start unchecked) |
+| `--description` | `-d` | `""` | Short description |
+| `--content` | `-c` | `""` | Full markdown body (or `-` for stdin) |
+| `--template` | | `null` | Template name |
+| `--dry-run` | | `false` | Preview without creating |
+
+```json
+{
+  "ok": true,
+  "data": {
+    "id": "M-1",
+    "title": "v1.0 — Core features",
+    "status": "Planning",
+    "priority": "High",
+    "labels": [],
+    "startDate": "2025-03-01",
+    "dueDate": "2025-04-01",
+    "checklist": [],
+    "log": [],
+    "createdAt": "2025-03-01T10:00:00.000Z",
+    "updatedAt": "2025-03-01T10:00:00.000Z",
+    "filePath": ".mdp/milestones/M-1-v1-core-features/M-1-v1-core-features.md"
+  }
+}
+```
+
+The actual `.md` file written to disk:
+
+```markdown
+---
+id: M-1
+title: "v1.0 — Core features"
+status: Planning
+priority: High
+labels: []
+startDate: 2025-03-01
+dueDate: 2025-04-01
+checklist: []
+log: []
+createdAt: 2025-03-01T10:00:00.000Z
+updatedAt: 2025-03-01T10:00:00.000Z
+---
+```
+
+## List Milestones
+
+```bash copy
+mdp milestone list
+```
+
+List milestones with filtering and sorting.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--status` | `-s` | all | Comma-separated status filter |
+| `--priority` | | all | Priority filter |
+| `--labels` | `-l` | all | Comma-separated labels filter |
+| `--overdue <bool>` | | all | `true` for overdue only, `false` for not overdue |
+| `--sort` | | `"id"` | Sort field: `id`, `title`, `status`, `priority`, `created`, `updated`, `dueDate`, `completion` |
+| `--order` | | `"asc"` | Sort order: `asc`, `desc` |
+
+## Get Milestone
+
+```bash copy
+mdp milestone get --id M-1
+```
+
+Get a single milestone by ID with full details.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Milestone ID |
+| `--include-content` | | `true` | Include markdown body |
+| `--include-issues` | | `false` | Include list of assigned issues |
+
+Returns all frontmatter fields plus `content`, `log`, `filePath`, and optionally `issues`.
+
+Additionally, the following **computed fields** are calculated at read time (not stored in the file):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `totalIssues` | `number` | Count of assigned issues |
+| `completedIssues` | `number` | Count of issues in a "done" status |
+| `completionPercentage` | `number` | Percentage (0-100) |
+| `statusBreakdown` | `Record<string, number>` | Count of issues per status |
+| `estimateTotal` | `number` | Sum of `estimate` across all issues |
+| `estimateCompleted` | `number` | Sum of `estimate` across completed issues |
+| `spentTotal` | `number` | Sum of `spent` across all issues |
+| `isOverdue` | `boolean` | `true` if past due and not 100% complete |
+| `checklistTotal` | `number` | Count of checklist items |
+| `checklistChecked` | `number` | Count of checked items |
+| `checklistProgress` | `number \| null` | Percentage (0-100), `null` if empty |
+
+## Update Milestone
+
+```bash copy
+mdp milestone update --id M-1 --status "Active"
+```
+
+Update a milestone.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Milestone ID |
+| `--title` | `-t` | | New title |
+| `--status` | `-s` | | New status |
+| `--priority` | | | New priority |
+| `--labels` | `-l` | | Replace all labels |
+| `--add-labels` | | | Add labels |
+| `--remove-labels` | | | Remove labels |
+| `--start-date` | | | Set start date (`none` to clear) |
+| `--due-date` | | | Set due date (`none` to clear) |
+| `--add-checklist` | | | Add checklist items (comma-separated) |
+| `--remove-checklist` | | | Remove checklist items by text (comma-separated) |
+| `--check` | | | Mark items done by text (comma-separated) |
+| `--uncheck` | | | Mark items not done by text (comma-separated) |
+| `--content` | `-c` | | Replace markdown body (or `-` for stdin) |
+| `--dry-run` | | `false` | Preview changes |
+
+## Delete Milestone
+
+```bash copy
+mdp milestone delete --id M-1
+```
+
+Permanently delete a milestone.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Milestone ID |
+| `--dry-run` | | `false` | Preview without deleting |
+
+**Behavior:**
+- Removes the milestone folder
+- Automatically unassigns all issues from this milestone (sets `milestone: null`)
+- Does not reclaim the ID
+
+## Milestone Progress
+
+```bash copy
+mdp milestone progress --id M-1
+```
+
+Show detailed progress report for a milestone.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Milestone ID |
+
+```json
+{
+  "ok": true,
+  "data": {
+    "milestones": [
+      {
+        "id": "M-1",
+        "title": "v1.0 — Core features",
+        "status": "Active",
+        "dueDate": "2025-04-01",
+        "totalIssues": 8,
+        "completedIssues": 3,
+        "completionPercentage": 37.5,
+        "statusBreakdown": { "Backlog": 2, "In Progress": 3, "Done": 3 },
+        "estimateTotal": 34,
+        "estimateCompleted": 13,
+        "spentTotal": 22,
+        "isOverdue": false,
+        "checklistTotal": 2,
+        "checklistChecked": 1,
+        "checklistProgress": 50
+      }
+    ]
+  }
+}
+```
+
+This progress is computed from the milestone file and all linked issues. For example, a milestone file:
+
+```yaml
+# In M-1-v1-core-features.md
+checklist:
+  - text: Authentication module
+    done: true
+  - text: API endpoints
+    done: false
+```
+
+With a linked issue `ISS-1` having `milestone: M-1` and `status: Done`, the system counts it toward `completedIssues`.
+
+## Milestone Log
+
+Manage log entries on a milestone. Five subcommands: `add`, `list`, `get`, `update`, `delete`.
+
+### Add Log Entry
+
+```bash copy
+mdp milestone log add --id M-1 -b "Auth module complete"
+```
+
+Append a log entry to a milestone's `log` frontmatter array.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Milestone ID |
+| `--body` | `-b` | **required** | Entry body text |
+| `--author` | | `"cli"` | Author identifier |
+| `--dry-run` | | `false` | Preview without writing |
+
+```json
+{
+  "ok": true,
+  "data": {
+    "id": "M-1",
+    "entry": {
+      "author": "agent-1",
+      "timestamp": "2025-03-15T08:00:00.000Z",
+      "body": "Auth module complete. Moving to API endpoints."
+    },
+    "totalEntries": 1,
+    "filePath": ".mdp/milestones/M-1-v1-core-features/M-1-v1-core-features.md"
+  }
+}
+```
+
+### List Log Entries
+
+```bash copy
+mdp milestone log list --id M-1
+```
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Milestone ID |
+
+### Get Log Entry
+
+```bash copy
+mdp milestone log get --id M-1 --index 0
+```
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Milestone ID |
+| `--index` | | **required** | Log entry index (0-based) |
+
+### Update Log Entry
+
+```bash copy
+mdp milestone log update --id M-1 --index 0 -b "Updated message"
+```
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Milestone ID |
+| `--index` | | **required** | Log entry index (0-based) |
+| `--author` | | | New author |
+| `--body` | `-b` | | New body text |
+| `--dry-run` | | `false` | Preview without writing |
+
+### Delete Log Entry
+
+```bash copy
+mdp milestone log delete --id M-1 --index 0
+```
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Milestone ID |
+| `--index` | | **required** | Log entry index (0-based) |
+| `--dry-run` | | `false` | Preview without writing |

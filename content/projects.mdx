@@ -1,0 +1,208 @@
+# Projects
+
+## Create Project
+
+```bash copy
+mdp project create -p <path>
+```
+
+Create a new markdown project and register it.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--force` | `-F` | `false` | Overwrite existing `.mdp/` directory |
+| `--preset <name>` | | `"software"` | Project preset: `software`, `marketing`, `design`, `product`, `generic` |
+| `--with-templates` | | `true` | Create default template files |
+| `--no-with-templates` | | | Skip creating template files |
+| `--issue-prefix <prefix>` | | `"ISS"` | Prefix for issue IDs |
+| `--milestone-prefix <prefix>` | | `"M"` | Prefix for milestone IDs |
+| `--tags <tags>` | | | Comma-separated tags for grouping |
+| `--name <name>` | | directory name | Project name |
+| `--description <description>` | | | One-line project description |
+| `--instructions <instructions>` | | | Free-text guidance for LLMs and collaborators |
+
+**Behavior:**
+- Creates `.mdp/` directory with `project.json`
+- Creates `issues/`, `milestones/`, `docs/`, `templates/` subdirectories
+- Preset is resolved from built-in and custom presets (defined in `~/.mdp/config.json`), then CLI flags override on top
+- Registers the project in `~/.mdp/config.json`
+- Fails with exit code 1 if `.mdp/` already exists (unless `--force`)
+
+```json
+{
+  "ok": true,
+  "data": {
+    "projectPath": "/home/user/my-project",
+    "created": {
+      "projectFile": ".mdp/project.json",
+      "directories": [".mdp/issues", ".mdp/milestones", ".mdp/docs", ".mdp/templates"],
+      "templates": [".mdp/templates/issue-template.md", ".mdp/templates/milestone-template.md"]
+    }
+  }
+}
+```
+
+After creation, the directory looks like:
+
+```
+.mdp/
+├── project.json
+├── issues/
+├── milestones/
+├── docs/
+└── templates/
+    ├── issue-template.md
+    └── milestone-template.md
+```
+
+## Add Project
+
+```bash copy
+mdp project add <path>
+```
+
+Register an existing project without creating any files.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--tags <tags>` | | Comma-separated tags for grouping |
+
+## List Projects
+
+```bash copy
+mdp project list
+```
+
+List all registered projects.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--tag <tag>` | | Filter projects by tag |
+
+```json
+{
+  "ok": true,
+  "data": {
+    "projects": [
+      {
+        "path": "/home/user/project-a",
+        "tags": ["work"]
+      }
+    ]
+  }
+}
+```
+
+## Remove Project
+
+```bash copy
+mdp project remove <path>
+```
+
+Remove a registered project path. Does not delete any files — only removes the project from the registry in `~/.mdp/config.json`.
+
+## Tag Project
+
+```bash copy
+mdp project tag <path> --add <tags>
+```
+
+Add or remove tags from a registered project.
+
+| Flag | Description |
+|------|-------------|
+| `--add <tags>` | Comma-separated tags to add |
+| `--remove <tags>` | Comma-separated tags to remove |
+
+## Show Settings
+
+```bash copy
+mdp project settings -p <path>
+```
+
+Display the project settings from `.mdp/project.json`.
+
+```json
+{
+  "ok": true,
+  "data": {
+    "projectPath": "/home/user/my-project",
+    "projectFile": "/home/user/my-project/.mdp/project.json",
+    "config": { ... }
+  }
+}
+```
+
+## Show Stats
+
+```bash copy
+mdp project stats -p <path>
+```
+
+Show project statistics.
+
+```json
+{
+  "ok": true,
+  "data": {
+    "projectPath": "/home/user/my-project",
+    "projectName": "my-project",
+    "totalIssues": 24,
+    "statusCounts": { "Backlog": 10, "In Progress": 5, "Done": 9 },
+    "priorityCounts": { "High": 3, "Medium": 12, "Low": 9 },
+    "typeCounts": { "task": 14, "bug": 5, "feature": 3, "chore": 2, "spike": 0 },
+    "labelCounts": { "bug": 5, "enhancement": 12 },
+    "createdThisMonth": 8,
+    "updatedThisMonth": 15
+  }
+}
+```
+
+## Fix Project
+
+```bash copy
+mdp project fix -p <path>
+```
+
+Fix folder names to match frontmatter data.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--dry-run` | `false` | Preview changes without applying them |
+
+**Behavior:**
+- Renames folders to match `{id}-{slug}` convention based on frontmatter title
+
+Before fix:
+
+```
+.mdp/issues/
+└── ISS-5-old-name/
+    └── ISS-5-old-name.md        # frontmatter title: "Fix login bug"
+```
+
+After fix:
+
+```
+.mdp/issues/
+└── ISS-5-fix-login-bug/
+    └── ISS-5-fix-login-bug.md
+```
+
+```json
+{
+  "ok": true,
+  "data": {
+    "actions": [
+      {
+        "type": "rename",
+        "entity": "issue",
+        "id": "ISS-5",
+        "from": ".mdp/issues/ISS-5-old-name",
+        "to": ".mdp/issues/ISS-5-fix-login-bug"
+      }
+    ],
+    "total": 1
+  }
+}
+```

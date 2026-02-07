@@ -1,0 +1,42 @@
+# Global Flags
+
+These flags are available on all commands (project, issue, and milestone).
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--project-path <path>` | `-p` | Path to project root. Default: auto-detect by walking up from cwd. |
+| `--format <fmt>` | `-f` | Output format: `json` (default), `table` |
+| `--quiet` | `-q` | Suppress all output |
+| `--verbose` | `-V` | Enable debug logging to stderr |
+| `--help` | `-h` | Show help for command |
+| `--version` | `-v` | Show CLI version |
+
+## Project Path Resolution
+
+All commands accept `-p / --project-path <path>` to specify the project root. If omitted, the CLI walks up from the current working directory looking for a `.mdp/` folder.
+
+## Quiet Mode
+
+`--quiet` suppresses all output. The command still executes and returns the appropriate exit code:
+
+```bash
+mdp issue update --id ISS-1 --status Done -q && echo "done"
+```
+
+## Verbose Mode
+
+`--verbose` enables detailed logging to stderr. Normal output still goes to stdout.
+
+## Stdin Support
+
+Commands that accept a `--body` or `--content` flag also accept `-` as the value to read from stdin:
+
+```bash
+echo "## Description\nAuth module with JWT" | mdp issue create -t "Implement auth" --content -
+```
+
+Batch commands (`batch-create`, `batch-update`) read a JSON array directly from stdin — they do not use the `--content -` convention:
+
+```bash
+echo '[{ "title": "Fix login bug", "type": "bug" }]' | mdp issue batch-create
+```

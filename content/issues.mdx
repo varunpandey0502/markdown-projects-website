@@ -1,0 +1,632 @@
+# Issues
+
+Every issue is a markdown file with YAML frontmatter.
+
+## Frontmatter Fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `id` | `string` | Auto-generated | Unique identifier (e.g., `ISS-1`) |
+| `title` | `string` | — | Issue title |
+| `type` | `string \| null` | `null` | Issue type (validated against config when provided) |
+| `status` | `string` | First status in config | Workflow stage (validated against config) |
+| `priority` | `string \| null` | `null` | Urgency level (validated against config when provided) |
+| `labels` | `string[]` | `[]` | Tags for filtering (validated against config) |
+| `assignee` | `string \| null` | `null` | Who is working on this (freeform) |
+| `milestone` | `string \| null` | `null` | Milestone ID (validated exists) |
+| `estimate` | `number \| null` | `null` | Effort points |
+| `spent` | `number \| null` | `null` | Actual effort spent |
+| `dueDate` | `string \| null` | `null` | ISO 8601 date |
+| `blockedBy` | `string[]` | `[]` | Issue IDs this depends on (cycles rejected) |
+| `parent` | `string \| null` | `null` | Parent issue ID |
+| `relatedTo` | `string[]` | `[]` | Related issue IDs |
+| `checklist` | `object[]` | `[]` | Acceptance criteria (`{text, done}`) |
+| `log` | `object[]` | `[]` | Activity log (`{timestamp, author, body}`) |
+| `createdAt` | `string` | Auto-generated | ISO 8601 timestamp |
+| `updatedAt` | `string` | Auto-generated | ISO 8601 timestamp |
+
+## Example Issue File
+
+```markdown
+---
+id: ISS-2
+title: Implement JWT tokens
+type: task
+status: In Progress
+priority: High
+labels:
+  - backend
+  - security
+assignee: agent-1
+milestone: M-1
+estimate: 5
+spent: 4
+dueDate: 2025-03-15
+blockedBy: []
+parent: ISS-1
+relatedTo:
+  - ISS-3
+checklist:
+  - text: Access token generation
+    done: true
+  - text: Refresh token rotation
+    done: true
+  - text: Token revocation endpoint
+    done: false
+log:
+  - timestamp: "2025-03-01T10:00:00.000Z"
+    author: agent-1
+    body: Created issue. Planning JWT implementation with RS256 signing.
+  - timestamp: "2025-03-02T14:30:00.000Z"
+    author: agent-1
+    body: Access and refresh token logic complete.
+createdAt: 2025-03-01T10:00:00.000Z
+updatedAt: 2025-03-02T14:30:00.000Z
+---
+
+## Description
+
+Implement JWT-based authentication with access and refresh tokens.
+Uses RS256 signing algorithm with 15-minute access token expiry
+and 7-day refresh token rotation.
+```
+
+## File Naming
+
+### ID Generation
+
+IDs are sequential within their type and project:
+
+- Issues: `{issuePrefix}-{N}` — e.g., `ISS-1`, `ISS-2`
+- Milestones: `{milestonePrefix}-{N}` — e.g., `M-1`, `M-2`
+
+The next ID is determined by scanning all existing items and incrementing the highest number found.
+
+### Slug Generation
+
+Slugs are derived from the title:
+
+1. Convert to lowercase
+2. Replace non-alphanumeric characters with hyphens
+3. Collapse consecutive hyphens
+4. Trim leading/trailing hyphens
+5. Truncate to 50 characters (on a word boundary if possible)
+
+Examples:
+
+```
+"Add user authentication"  → add-user-authentication
+"Fix bug #42 — login"      → fix-bug-42-login
+"API v2.0 (beta)"          → api-v2-0-beta
+```
+
+### Naming Convention
+
+Each issue/milestone lives in its own folder:
+
+```
+{id}-{slug}/{id}-{slug}.md
+```
+
+- `ISS-1-implement-auth/ISS-1-implement-auth.md`
+- `M-3-q2-release/M-3-q2-release.md`
+
+The `{id}` portion uses the prefix from [project config](/project-config) (`issues.prefix` or `milestones.prefix`). Since the prefix is embedded in every path, it cannot be changed after project creation without renaming all existing files.
+
+### Log Entries
+
+Activity is tracked via the `log` frontmatter array:
+
+```yaml
+log:
+  - timestamp: "2025-03-01T10:00:00.000Z"
+    author: agent-1
+    body: Started implementation. Using RS256 for JWT signing.
+  - timestamp: "2025-03-02T09:15:00.000Z"
+    author: agent-2
+    body: "Code review: looks good."
+```
+
+All activity lives in frontmatter — the markdown body is reserved for free-form prose only.
+
+## Create Issue
+
+```bash copy
+mdp issue create -t "Issue title"
+```
+
+Create a new issue.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--title` | `-t` | **required** | Issue title |
+| `--type` | | `null` | Issue type (must match configured type) |
+| `--status` | `-s` | First status in config | Initial status |
+| `--priority` | | `null` | Priority level |
+| `--labels` | `-l` | `[]` | Comma-separated labels |
+| `--assignee` | `-a` | `null` | Assignee identifier |
+| `--milestone` | `-m` | `null` | Milestone ID |
+| `--estimate` | `-e` | `null` | Effort points (positive integer) |
+| `--spent` | | `null` | Actual effort spent |
+| `--due-date` | | `null` | Due date (YYYY-MM-DD) |
+| `--blocked-by` | | `[]` | Comma-separated issue IDs |
+| `--parent` | | `null` | Parent issue ID |
+| `--related-to` | | `[]` | Comma-separated issue IDs |
+| `--checklist` | | `[]` | Comma-separated checklist items (all start unchecked) |
+| `--description` | `-d` | `""` | Short description (added as first paragraph) |
+| `--content` | `-c` | `""` | Full markdown body (or `-` for stdin) |
+| `--template` | | `null` | Template name from `.mdp/templates/` |
+| `--dry-run` | | `false` | Preview without creating |
+
+**Behavior:**
+- Generates the next sequential ID
+- Creates `{id}-{slug}/` directory inside `issues/`
+- Writes `{id}-{slug}.md` with frontmatter and body content
+- Validates status, priority, labels, and type against config
+- Validates `blockedBy`, `parent`, and `relatedTo` IDs exist
+- Rejects changes that would create a cycle (`CIRCULAR_DEPENDENCY` error)
+
+```json
+{
+  "ok": true,
+  "data": {
+    "id": "ISS-1",
+    "title": "Authentication",
+    "type": "feature",
+    "status": "Backlog",
+    "priority": "High",
+    "labels": ["backend"],
+    "assignee": "agent-1",
+    "milestone": "M-1",
+    "estimate": 13,
+    "spent": null,
+    "dueDate": null,
+    "blockedBy": [],
+    "parent": null,
+    "relatedTo": [],
+    "checklist": [],
+    "log": [],
+    "createdAt": "2025-03-01T10:00:00.000Z",
+    "updatedAt": "2025-03-01T10:00:00.000Z",
+    "filePath": ".mdp/issues/ISS-1-authentication/ISS-1-authentication.md"
+  }
+}
+```
+
+The actual `.md` file written to disk:
+
+```markdown
+---
+id: ISS-1
+title: Authentication
+type: feature
+status: Backlog
+priority: High
+labels:
+  - backend
+assignee: agent-1
+milestone: M-1
+estimate: 13
+spent: null
+dueDate: null
+blockedBy: []
+parent: null
+relatedTo: []
+checklist: []
+log: []
+createdAt: 2025-03-01T10:00:00.000Z
+updatedAt: 2025-03-01T10:00:00.000Z
+---
+```
+
+## List Issues
+
+```bash copy
+mdp issue list
+```
+
+List issues with filtering and sorting.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--status` | `-s` | all | Comma-separated status filter |
+| `--type` | | all | Comma-separated type filter |
+| `--priority` | | all | Priority filter |
+| `--labels` | `-l` | all | Comma-separated labels (issues must have at least one) |
+| `--assignee` | `-a` | all | Filter by assignee (`none` for unassigned) |
+| `--milestone` | `-m` | all | Filter by milestone ID (`none` for unassigned) |
+| `--blocked` | | all | `true` for only blocked, `false` for only unblocked |
+| `--parent` | | all | Filter by parent ID (`none` for top-level only) |
+| `--sort` | | `"id"` | Sort field: `id`, `title`, `status`, `priority`, `type`, `created`, `updated`, `estimate`, `spent`, `dueDate` |
+| `--order` | | `"asc"` | Sort order: `asc`, `desc` |
+| `--created-after` | | | Filter: created after date (YYYY-MM-DD) |
+| `--created-before` | | | Filter: created before date |
+| `--due-before` | | | Filter: due before date |
+| `--due-after` | | | Filter: due after date |
+
+## Get Issue
+
+```bash copy
+mdp issue get --id ISS-1
+```
+
+Get a single issue by ID with full details including markdown body.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Issue ID |
+| `--include-content` | | `true` | Include markdown body in output |
+
+Returns all frontmatter fields plus `content` and `filePath`.
+
+Additionally, the following **computed fields** are calculated at read time (not stored in the file):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `blocks` | `string[]` | Inverse of `blockedBy` — which issues are blocked by this one |
+| `children` | `string[]` | Inverse of `parent` — which issues have this as parent |
+| `checklistTotal` | `number` | Count of checklist items |
+| `checklistChecked` | `number` | Count of checked items |
+| `checklistProgress` | `number \| null` | Percentage (0-100), `null` if empty |
+
+## Update Issue
+
+```bash copy
+mdp issue update --id ISS-1 --status "In Progress"
+```
+
+Update one or more fields on an existing issue.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Issue ID to update |
+| `--title` | `-t` | | New title (renames folder/file) |
+| `--type` | | | New issue type |
+| `--status` | `-s` | | New status |
+| `--priority` | | | New priority |
+| `--labels` | `-l` | | Replace all labels (comma-separated) |
+| `--add-labels` | | | Add labels without removing existing |
+| `--remove-labels` | | | Remove specific labels |
+| `--assignee` | `-a` | | Set assignee (`none` to unassign) |
+| `--milestone` | `-m` | | Set milestone (`none` to unassign) |
+| `--estimate` | `-e` | | Set estimate (`none` to clear) |
+| `--spent` | | | Set spent (`none` to clear) |
+| `--due-date` | | | Set due date (`none` to clear) |
+| `--blocked-by` | | | Replace blockedBy list |
+| `--add-blocked-by` | | | Add to blockedBy list |
+| `--remove-blocked-by` | | | Remove from blockedBy list |
+| `--parent` | | | Set parent issue (`none` to clear) |
+| `--related-to` | | | Replace relatedTo list |
+| `--add-related-to` | | | Add to relatedTo list |
+| `--remove-related-to` | | | Remove from relatedTo list |
+| `--add-checklist` | | | Add checklist items (comma-separated) |
+| `--remove-checklist` | | | Remove checklist items by text (comma-separated) |
+| `--check` | | | Mark items done by text (comma-separated) |
+| `--uncheck` | | | Mark items not done by text (comma-separated) |
+| `--content` | `-c` | | Replace markdown body (or `-` for stdin) |
+| `--dry-run` | | `false` | Preview changes without applying |
+
+**Behavior:**
+- Only specified fields are updated; omitted fields are unchanged
+- Changing `title` renames the folder and file to match the new slug
+- Updates `updatedAt` timestamp automatically
+- Rejects changes that would create dependency or parent-child cycles
+
+### Before/After Example
+
+Running `mdp issue update --id ISS-1 --status "In Progress" --priority High --assignee agent-1`:
+
+Before:
+
+```yaml
+status: Backlog
+priority: null
+assignee: null
+```
+
+After:
+
+```yaml
+status: In Progress
+priority: High
+assignee: agent-1
+```
+
+## Delete Issue
+
+```bash copy
+mdp issue delete --id ISS-1
+```
+
+Permanently delete an issue.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Issue ID to delete |
+| `--dry-run` | | `false` | Preview without deleting |
+
+**Behavior:**
+- Removes the entire issue folder (including attachments)
+- Cleans up references in other issues: removes this ID from `blockedBy` and `relatedTo` arrays, sets `parent: null` on child issues
+- Does not reclaim the ID
+
+For example, deleting `ISS-2` when `ISS-3` has `blockedBy: [ISS-2]` will update `ISS-3`'s frontmatter to `blockedBy: []`.
+
+## Issue Log
+
+Manage log entries on an issue. Five subcommands: `add`, `list`, `get`, `update`, `delete`.
+
+### Add Log Entry
+
+```bash copy
+mdp issue log add --id ISS-1 -b "Started implementation"
+```
+
+Append a log entry to an issue's `log` frontmatter array.
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Issue ID |
+| `--body` | `-b` | **required** | Entry body text |
+| `--author` | | `"cli"` | Author identifier |
+| `--dry-run` | | `false` | Preview without writing |
+
+**Behavior:**
+- Appends a `{timestamp, author, body}` entry to the `log` array
+- Timestamp is the current UTC time in ISO 8601 format
+- Does not modify the markdown body — all activity lives in frontmatter
+- Updates `updatedAt` timestamp
+
+```json
+{
+  "ok": true,
+  "data": {
+    "id": "ISS-1",
+    "entry": {
+      "author": "agent-1",
+      "timestamp": "2025-03-02T14:30:00.000Z",
+      "body": "Implementation complete. All tests passing."
+    },
+    "totalEntries": 2,
+    "filePath": ".mdp/issues/ISS-1-add-authentication/ISS-1-add-authentication.md"
+  }
+}
+```
+
+### List Log Entries
+
+```bash copy
+mdp issue log list --id ISS-1
+```
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Issue ID |
+
+### Get Log Entry
+
+```bash copy
+mdp issue log get --id ISS-1 --index 0
+```
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Issue ID |
+| `--index` | | **required** | Log entry index (0-based) |
+
+### Update Log Entry
+
+```bash copy
+mdp issue log update --id ISS-1 --index 0 -b "Updated message"
+```
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Issue ID |
+| `--index` | | **required** | Log entry index (0-based) |
+| `--author` | | | New author |
+| `--body` | `-b` | | New body text |
+| `--dry-run` | | `false` | Preview without writing |
+
+### Delete Log Entry
+
+```bash copy
+mdp issue log delete --id ISS-1 --index 0
+```
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--id` | | **required** | Issue ID |
+| `--index` | | **required** | Log entry index (0-based) |
+| `--dry-run` | | `false` | Preview without writing |
+
+## Batch Create Issues
+
+```bash copy
+echo '[...]' | mdp issue batch-create
+```
+
+Create multiple issues in one command by piping a JSON array to stdin.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--dry-run` | `false` | Preview without creating (IDs shown as `ISS-X`) |
+
+### Input Fields
+
+Each object in the JSON array accepts:
+
+| Field | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `title` | **yes** | | Issue title |
+| `type` | no | `null` | Issue type |
+| `status` | no | First status in config | Initial status |
+| `priority` | no | `null` | Priority level |
+| `labels` | no | `[]` | Array of label strings |
+| `assignee` | no | `null` | Assignee identifier |
+| `milestone` | no | `null` | Milestone ID |
+| `estimate` | no | `null` | Effort points |
+| `spent` | no | `null` | Actual effort spent |
+| `dueDate` | no | `null` | Due date (`"YYYY-MM-DD"`) |
+| `blockedBy` | no | `[]` | Array of issue IDs |
+| `parent` | no | `null` | Parent issue ID |
+| `relatedTo` | no | `[]` | Array of issue IDs |
+| `checklist` | no | `[]` | Array of checklist item strings |
+| `description` | no | `""` | Short description |
+| `content` | no | `""` | Full markdown body |
+| `template` | no | `null` | Template name |
+
+### Example
+
+```bash copy
+echo '[
+  { "title": "User authentication", "type": "feature", "priority": "High", "labels": ["backend", "security"], "milestone": "M-1" },
+  { "title": "Write auth tests", "type": "task", "labels": ["backend"], "blockedBy": ["ISS-1"] },
+  { "title": "Login page UI", "type": "feature", "labels": ["frontend"] }
+]' | mdp issue batch-create
+```
+
+### Output
+
+```json
+{
+  "ok": true,
+  "data": {
+    "total": 3,
+    "succeeded": 3,
+    "failed": 0,
+    "results": [
+      {
+        "ok": true,
+        "data": { "id": "ISS-1", "title": "User authentication", "filePath": ".mdp/issues/ISS-1-user-authentication/ISS-1-user-authentication.md" }
+      },
+      {
+        "ok": true,
+        "data": { "id": "ISS-2", "title": "Write auth tests", "filePath": ".mdp/issues/ISS-2-write-auth-tests/ISS-2-write-auth-tests.md" }
+      },
+      {
+        "ok": true,
+        "data": { "id": "ISS-3", "title": "Login page UI", "filePath": ".mdp/issues/ISS-3-login-page-ui/ISS-3-login-page-ui.md" }
+      }
+    ]
+  }
+}
+```
+
+When some items fail:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "total": 2,
+    "succeeded": 1,
+    "failed": 1,
+    "results": [
+      {
+        "ok": true,
+        "data": { "id": "ISS-4", "title": "Valid issue", "filePath": ".mdp/issues/ISS-4-valid-issue/ISS-4-valid-issue.md" }
+      },
+      {
+        "ok": false,
+        "error": { "code": "INVALID_TYPE", "message": "Invalid type \"unknown\"", "index": 1, "details": {} }
+      }
+    ]
+  }
+}
+```
+
+**Behavior:**
+- Items are processed sequentially in array order
+- IDs are assigned sequentially starting from the next available ID
+- Processing continues on individual item failures (continue-on-error)
+- Exit code is `1` if any item fails, `0` if all succeed
+- Invalid JSON or a non-array input produces an `INVALID_INPUT` error
+
+## Batch Update Issues
+
+```bash copy
+echo '[...]' | mdp issue batch-update
+```
+
+Update multiple issues in one command by piping a JSON array to stdin.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--dry-run` | `false` | Preview changes without writing |
+
+### Input Fields
+
+Each object in the JSON array accepts:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `id` | **yes** | Issue ID to update (case-insensitive) |
+| `title` | no | New title |
+| `type` | no | New issue type |
+| `status` | no | New status |
+| `priority` | no | New priority |
+| `labels` | no | Replace all labels (array) |
+| `addLabels` | no | Add labels without removing existing (array) |
+| `removeLabels` | no | Remove specific labels (array) |
+| `assignee` | no | Set assignee |
+| `milestone` | no | Set milestone |
+| `estimate` | no | Set estimate |
+| `spent` | no | Set spent |
+| `dueDate` | no | Set due date (`"YYYY-MM-DD"`) |
+| `blockedBy` | no | Replace blockedBy list (array) |
+| `addBlockedBy` | no | Add to blockedBy list (array) |
+| `removeBlockedBy` | no | Remove from blockedBy list (array) |
+| `parent` | no | Set parent issue |
+| `relatedTo` | no | Replace relatedTo list (array) |
+| `addRelatedTo` | no | Add to relatedTo list (array) |
+| `removeRelatedTo` | no | Remove from relatedTo list (array) |
+| `addChecklist` | no | Add checklist items (array of strings) |
+| `removeChecklist` | no | Remove checklist items by text (array of strings) |
+| `check` | no | Mark items done by text (array of strings) |
+| `uncheck` | no | Mark items not done by text (array of strings) |
+| `content` | no | Replace markdown body |
+
+### Example
+
+```bash copy
+echo '[
+  { "id": "ISS-1", "status": "In Progress", "assignee": "agent-1" },
+  { "id": "ISS-2", "priority": "High", "addLabels": ["security"] },
+  { "id": "ISS-3", "addChecklist": ["Write unit tests", "Update docs"], "check": ["Write unit tests"] }
+]' | mdp issue batch-update
+```
+
+### Output
+
+```json
+{
+  "ok": true,
+  "data": {
+    "total": 3,
+    "succeeded": 3,
+    "failed": 0,
+    "results": [
+      {
+        "ok": true,
+        "data": { "id": "ISS-1", "changes": { "status": "In Progress", "assignee": "agent-1" }, "filePath": ".mdp/issues/ISS-1-user-authentication/ISS-1-user-authentication.md" }
+      },
+      {
+        "ok": true,
+        "data": { "id": "ISS-2", "changes": { "priority": "High", "addLabels": ["security"] }, "filePath": ".mdp/issues/ISS-2-write-auth-tests/ISS-2-write-auth-tests.md" }
+      },
+      {
+        "ok": true,
+        "data": { "id": "ISS-3", "changes": { "addChecklist": ["Write unit tests", "Update docs"], "check": ["Write unit tests"] }, "filePath": ".mdp/issues/ISS-3-login-page-ui/ISS-3-login-page-ui.md" }
+      }
+    ]
+  }
+}
+```
+
+**Behavior:**
+- Items are processed sequentially in array order
+- In-memory state is refreshed after each write — cycle detection and ID lookups reflect earlier items in the same batch
+- Processing continues on individual item failures (continue-on-error)
+- Exit code is `1` if any item fails, `0` if all succeed
+- Invalid JSON or a non-array input produces an `INVALID_INPUT` error

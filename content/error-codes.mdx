@@ -1,0 +1,120 @@
+# Error Codes
+
+All errors are returned as JSON on stderr with a consistent structure:
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable description",
+    "details": { ... }
+  }
+}
+```
+
+## Error Code Reference
+
+| Code | Description |
+|------|-------------|
+| `PROJECT_NOT_FOUND` | No `.mdp/` directory found |
+| `ISSUE_NOT_FOUND` | Issue ID does not exist |
+| `MILESTONE_NOT_FOUND` | Milestone ID does not exist |
+| `TEMPLATE_NOT_FOUND` | Template file not found |
+| `INVALID_STATUS` | Status name not in config |
+| `INVALID_PRIORITY` | Priority name not in config |
+| `INVALID_TYPE` | Type name not in config |
+| `INVALID_LABEL` | Label name not in config |
+| `INVALID_DATE` | Date string cannot be parsed |
+| `INVALID_ID` | Referenced ID (blockedBy, parent, etc.) does not exist |
+| `MISSING_REQUIRED` | Required flag is missing |
+| `ALREADY_EXISTS` | `.mdp/` already exists (on `init` without `--force`) |
+| `CIRCULAR_DEPENDENCY` | `blockedBy` or `parent` change would create a cycle |
+| `WRITE_ERROR` | Filesystem write failed |
+| `PARSE_ERROR` | Markdown/YAML parsing failed |
+| `INVALID_INPUT` | Invalid JSON input or missing required fields (used by `batch-create`, `batch-update`) |
+| `CONFIG_ERROR` | project.json is missing or invalid |
+
+## Example Errors
+
+### Invalid Status
+
+```bash
+mdp issue update --id ISS-1 --status "bogus"
+```
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "INVALID_STATUS",
+    "message": "Invalid status \"bogus\"",
+    "details": {}
+  }
+}
+```
+
+### Issue Not Found
+
+```bash
+mdp issue get --id ISS-999
+```
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "ISSUE_NOT_FOUND",
+    "message": "Issue ISS-999 not found",
+    "details": { "id": "ISS-999" }
+  }
+}
+```
+
+### Invalid Label
+
+```bash
+mdp issue create -t "Test" -l "nonexistent"
+```
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "INVALID_LABEL",
+    "message": "Invalid label \"nonexistent\"",
+    "details": {}
+  }
+}
+```
+
+### Circular Dependency
+
+When `ISS-2` already has `blockedBy: [ISS-1]`:
+
+```bash
+mdp issue update --id ISS-1 --add-blocked-by ISS-2
+```
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "CIRCULAR_DEPENDENCY",
+    "message": "Adding ISS-2 to blockedBy of ISS-1 would create a circular dependency",
+    "details": {}
+  }
+}
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | General error |
+| `2` | Project not found |
+
+## Warnings
+
+Non-fatal issues are included in the `warnings` array of successful responses. For example, a command may succeed but include warnings about deprecated usage or other non-critical issues.

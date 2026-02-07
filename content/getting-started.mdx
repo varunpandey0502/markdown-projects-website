@@ -1,0 +1,197 @@
+# Getting Started
+
+## Installation
+
+### As a Skill
+
+The easiest way to get started is to install the `markdown-projects` skill. This gives the agent full context on how to install and use the tool:
+
+```bash
+npx skills add varunpandey0502/markdown-projects/
+```
+
+Once the skill is installed, the agent can install the CLI, initialize projects, and manage issues and milestones autonomously.
+
+### Manual installation
+
+The `mdp` CLI runs on [Bun](https://bun.sh). Install Bun first if you don't have it:
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+Then install the CLI globally:
+
+```bash
+bun install -g github:varunpandey0502/markdown-projects
+```
+
+Verify the installation:
+
+```bash
+mdp --version
+```
+
+## Initialize a Project
+
+Create a new project with the CLI:
+
+```bash
+mdp project create -p .
+```
+
+This creates the `.mdp/` directory with default configuration and templates.
+
+### Presets
+
+A preset selects the initial configuration for your project — which statuses, types, labels, and priorities are available. The preset is applied once at creation time and written to `.mdp/project.json`. After creation, the preset has no further effect; you edit `project.json` directly.
+
+```bash
+mdp project create -p . --preset software    # Default - task, bug, feature, chore, spike
+mdp project create -p . --preset marketing   # Campaign-focused types and labels
+mdp project create -p . --preset design      # Design workflow types
+mdp project create -p . --preset product     # Product management types
+mdp project create -p . --preset generic     # Minimal defaults
+```
+
+See [Global Config — Presets](/global-config#presets) for the full comparison of what each preset provides.
+
+### Custom Prefixes
+
+Override the default ID prefixes:
+
+```bash
+mdp project create -p . --issue-prefix TASK --milestone-prefix EPIC
+```
+
+This produces IDs like `TASK-1`, `EPIC-1` instead of the defaults `ISS-1`, `M-1`.
+
+> **Note:** Prefixes are embedded in every file and folder name (`TASK-1-slug/TASK-1-slug.md`). They cannot be changed after project creation without renaming all existing files.
+
+## Your First Workflow
+
+```bash
+# 1. Initialize
+mdp project create -p .
+
+# 2. Create a milestone
+mdp milestone create -t "MVP Release" --due-date 2025-06-01
+
+# 3. Create issues
+mdp issue create -t "User authentication" --type feature --milestone M-1
+mdp issue create -t "Database schema" --type task --milestone M-1
+mdp issue create -t "Write tests" --type task --blocked-by ISS-1 --milestone M-1
+
+# 4. Start working
+mdp issue update --id ISS-2 --status "In Progress" --assignee agent-1
+
+# 5. Track progress
+mdp issue log add --id ISS-2 -b "Schema design complete"
+mdp issue update --id ISS-2 --add-checklist "Create tables" --add-checklist "Add indexes"
+mdp issue update --id ISS-2 --check "Create tables"
+
+# 6. Complete work
+mdp issue update --id ISS-2 --status "Done"
+
+# 7. Check milestone progress
+mdp milestone progress --id M-1
+```
+
+After running these commands, here's what's on disk:
+
+```
+.mdp/
+├── project.json
+├── issues/
+│   ├── ISS-1-user-authentication/
+│   │   └── ISS-1-user-authentication.md
+│   ├── ISS-2-database-schema/
+│   │   └── ISS-2-database-schema.md
+│   └── ISS-3-write-tests/
+│       └── ISS-3-write-tests.md
+├── milestones/
+│   └── M-1-mvp-release/
+│       └── M-1-mvp-release.md
+├── docs/
+└── templates/
+```
+
+The first issue file (`ISS-1-user-authentication.md`) looks like this:
+
+```markdown
+---
+id: ISS-1
+title: User authentication
+type: feature
+status: Backlog
+priority: null
+labels: []
+assignee: null
+milestone: M-1
+estimate: null
+spent: null
+dueDate: null
+blockedBy: []
+parent: null
+relatedTo: []
+checklist: []
+log: []
+createdAt: 2025-03-01T10:00:00.000Z
+updatedAt: 2025-03-01T10:00:00.000Z
+---
+```
+
+## Agent Workflow
+
+The CLI is designed for AI agents performing autonomous development:
+
+```bash
+mdp project create -p .
+mdp milestone create -t "v1.0 — Core features" --due-date 2025-04-01
+
+# Create multiple issues in one shot with batch-create
+echo '[
+  { "title": "Authentication", "type": "feature", "estimate": 13, "milestone": "M-1", "assignee": "agent-1" },
+  { "title": "Implement JWT tokens", "type": "task", "parent": "ISS-1", "status": "To Do", "milestone": "M-1", "estimate": 5, "assignee": "agent-1" },
+  { "title": "Write auth tests", "type": "task", "parent": "ISS-1", "status": "To Do", "blockedBy": ["ISS-2"], "assignee": "agent-1" }
+]' | mdp issue batch-create
+
+# Start work
+mdp issue update --id ISS-2 --status "In Progress"
+mdp issue log add --id ISS-2 -b "Starting implementation. Using JWT with refresh tokens."
+
+# ... agent works, commits code ...
+
+# Update multiple issues at once with batch-update
+echo '[
+  { "id": "ISS-2", "addChecklist": ["Access token generation", "Refresh token rotation"], "check": ["Access token generation", "Refresh token rotation"], "spent": 4, "status": "Done" },
+  { "id": "ISS-3", "status": "In Progress" }
+]' | mdp issue batch-update
+
+mdp milestone progress --id M-1
+```
+
+After the batch-create, `ISS-2-implement-jwt-tokens.md` contains:
+
+```markdown
+---
+id: ISS-2
+title: Implement JWT tokens
+type: task
+status: To Do
+priority: null
+labels: []
+assignee: agent-1
+milestone: M-1
+estimate: 5
+spent: null
+dueDate: null
+blockedBy: []
+parent: ISS-1
+relatedTo: []
+checklist: []
+log: []
+createdAt: 2025-03-01T10:00:00.000Z
+updatedAt: 2025-03-01T10:00:00.000Z
+---
+```
