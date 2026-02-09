@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: '%s – Markdown Projects'
   },
   description:
-    'File-based project management with markdown. CLI tool and VS Code extension for tracking issues, milestones, and documentation — all as plain text files.',
+    'File-based project management with markdown. A CLI tool for tracking issues, milestones, and documentation — all as plain text files.',
   metadataBase: new URL('https://markdown-projects.vercel.app')
 }
 
