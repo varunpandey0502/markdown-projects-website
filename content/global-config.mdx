@@ -11,6 +11,11 @@ Global configuration lives at `~/.mdp/config.json`. This file stores your projec
     { "path": "/home/user/blog", "tags": ["personal"] },
     { "path": "/home/user/design-system", "tags": ["work", "frontend"] }
   ],
+  "tags": {
+    "work": "Acme Corp — B2B SaaS for supply chain management",
+    "backend": "Backend services and APIs",
+    "frontend": "Frontend applications and design systems"
+  },
   "presets": {
     "my-team": {
       "issues": {
@@ -107,10 +112,29 @@ Example output of `mdp project list --tag work`:
     "projects": [
       { "path": "/home/user/myapp", "tags": ["work", "backend"] },
       { "path": "/home/user/design-system", "tags": ["work", "frontend"] }
-    ]
+    ],
+    "total": 2,
+    "tagDescriptions": {
+      "work": "Acme Corp — B2B SaaS for supply chain management",
+      "backend": "Backend services and APIs",
+      "frontend": "Frontend applications and design systems"
+    }
   }
 }
 ```
+
+## Tag Descriptions
+
+The `tags` object maps tag names to descriptions. This provides context about what a tag represents (e.g., a company, team, or domain) so LLMs and collaborators can understand project groupings.
+
+```bash copy
+mdp project tag-describe acme -d "Acme Corp — B2B SaaS for supply chain management"
+mdp project tag-describe acme          # View a tag's description
+mdp project tag-describe acme --remove # Remove a tag's description
+mdp project tag-list                   # List all tags with descriptions and project counts
+```
+
+Tag descriptions are included in `mdp project list` output via the `tagDescriptions` field, giving consumers immediate context about what each tag means.
 
 ## Presets
 
@@ -246,6 +270,7 @@ ISS-3   Write tests            To Do
 | Section | Commands |
 |---------|----------|
 | `projects` | `project add`, `project list`, `project remove`, `project tag`, `project create` (auto-registers) |
+| `tags` | `project tag-describe`, `project tag-list`, `project list` (includes `tagDescriptions` in output) |
 | `presets` | `project create --preset <name>` |
 | `defaults.preset` | `project create` (when `--preset` is omitted) |
 | `defaults.format` | All commands (when `-f` is omitted) |

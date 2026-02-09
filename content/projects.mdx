@@ -88,7 +88,60 @@ List all registered projects.
         "path": "/home/user/project-a",
         "tags": ["work"]
       }
-    ]
+    ],
+    "total": 1,
+    "tagDescriptions": {
+      "work": "Acme Corp — B2B SaaS for supply chain management"
+    }
+  }
+}
+```
+
+## Describe Tag
+
+```bash copy
+mdp project tag-describe <tag> -d "description"
+```
+
+Set, view, or remove a tag description. Tag descriptions provide context about what a tag represents (e.g., a company, team, or domain), stored in `~/.mdp/config.json`.
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--description <text>` | `-d` | Description text for the tag |
+| `--remove` | | Remove the tag description |
+
+**Modes:**
+- `mdp project tag-describe <tag> -d "text"` — Set or update the description
+- `mdp project tag-describe <tag>` — View the current description
+- `mdp project tag-describe <tag> --remove` — Remove the description
+
+```json
+{
+  "ok": true,
+  "data": {
+    "tag": "acme",
+    "description": "Acme Corp — B2B SaaS for supply chain management"
+  }
+}
+```
+
+## List Tags
+
+```bash copy
+mdp project tag-list
+```
+
+List all known tags with their descriptions and project counts. Includes tags from both project entries and tag descriptions.
+
+```json
+{
+  "ok": true,
+  "data": {
+    "tags": [
+      { "tag": "acme", "description": "Acme Corp — B2B SaaS for supply chain management", "projectCount": 2 },
+      { "tag": "personal", "description": null, "projectCount": 1 }
+    ],
+    "total": 2
   }
 }
 ```
