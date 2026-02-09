@@ -24,7 +24,13 @@ export const metadata: Metadata = {
   },
   description:
     'File-based project management with markdown. A CLI tool for tracking issues, milestones, and documentation — all as plain text files.',
-  metadataBase: new URL('https://markdown-projects.vercel.app')
+  metadataBase: new URL('https://markdown-projects.vercel.app'),
+  icons: {
+    icon: '/favicon.ico',
+  },
+  openGraph: {
+    images: '/og.png',
+  },
 }
 
 const navbar = (
@@ -53,7 +59,6 @@ export default async function RootLayout({
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <Head
-        faviconGlyph="📋"
         color={{
           hue: { dark: 0, light: 0 },
           saturation: { dark: 84, light: 84 },
@@ -68,7 +73,7 @@ export default async function RootLayout({
         <Layout
           navbar={navbar}
           pageMap={await getPageMap()}
-          docsRepositoryBase="https://github.com/varunpandey0502/markdown-projects/tree/main/docs"
+          docsRepositoryBase="https://github.com/varunpandey0502/markdown-projects-website/tree/main"
           sidebar={{ defaultMenuCollapseLevel: 1 }}
           footer={footer}
           nextThemes={{ defaultTheme: 'light' }}
