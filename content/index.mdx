@@ -7,7 +7,8 @@ A CLI tool that stores your entire project — issues, milestones, docs — as p
 ```
 project-root/
 └── .mdp/
-    ├── project.json
+    ├── settings.json
+    ├── project.md
     ├── issues/
     │   ├── ISS-1-add-authentication/
     │   │   └── ISS-1-add-authentication.md
@@ -93,6 +94,6 @@ The `warnings` array contains non-fatal issues. Table format is available via `-
 
 ## Command Groups
 
-- **[Projects](/projects)** — `project create`, `add`, `list`, `remove`, `tag`, `settings`, `stats`, `fix`
+- **[Projects](/projects)** — `project create`, `get`, `add`, `list`, `remove`, `tag`, `settings`, `stats`, `fix`, `log {add,list,get,update,delete}`
 - **[Issues](/issues)** — `issue create`, `list`, `get`, `update`, `delete`, `log {add,list,get,update,delete}`, `batch-create`, `batch-update`
 - **[Milestones](/milestones)** — `milestone create`, `list`, `get`, `update`, `delete`, `progress`, `log {add,list,get,update,delete}`

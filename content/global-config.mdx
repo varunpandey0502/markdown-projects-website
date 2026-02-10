@@ -1,8 +1,8 @@
 # Global Config
 
-Global configuration lives at `~/.mdp/config.json`. This file stores your project registry, custom presets, and default preferences.
+Global configuration lives at `~/.mdp/settings.json`. This file stores your project registry, custom presets, and default preferences.
 
-## Complete config.json
+## Complete settings.json
 
 ```json
 {
@@ -143,7 +143,7 @@ Tag descriptions are included in `mdp project list` output via the `tagDescripti
 
 ## Presets
 
-A preset is a **one-time configuration template** used at project creation. When you run `mdp project create --preset <name>`, the preset's values are written to `.mdp/project.json`. After that, the preset has no further effect — the project's `project.json` is self-contained and can be edited directly.
+A preset is a **one-time configuration template** used at project creation. When you run `mdp project create --preset <name>`, the preset's values are written to `.mdp/settings.json`. After that, the preset has no further effect — the project's `settings.json` is self-contained and can be edited directly.
 
 ### Available Presets
 
@@ -211,13 +211,13 @@ With custom prefixes, the directory structure looks like:
     └── TASK-2-database.md
 ```
 
-The prefixes are stored in `.mdp/project.json` and used for all subsequent issue and milestone creation.
+The prefixes are stored in `.mdp/settings.json` and used for all subsequent issue and milestone creation.
 
 > **Important:** Prefixes are embedded in every file and folder name. Once a project is created, the prefix cannot be changed without renaming all existing files.
 
 ## Custom Presets
 
-The `presets` object in `~/.mdp/config.json` lets you define custom presets alongside the built-in ones. Each preset must contain the full `issues` and `milestones` objects — same schema as the `issues` and `milestones` sections of [project.json](/project-config).
+The `presets` object in `~/.mdp/settings.json` lets you define custom presets alongside the built-in ones. Each preset must contain the full `issues` and `milestones` objects — same schema as the `issues` and `milestones` sections of [settings.json](/project-config).
 
 Custom presets are available when creating projects:
 
@@ -229,7 +229,7 @@ If a custom preset has the same name as a built-in preset, the custom one takes 
 
 ### Default Preset
 
-Set the default preset in `~/.mdp/config.json` so you don't need to specify `--preset` every time:
+Set the default preset in `~/.mdp/settings.json` so you don't need to specify `--preset` every time:
 
 ```json
 {

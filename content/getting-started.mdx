@@ -44,7 +44,7 @@ This creates the `.mdp/` directory with default configuration and templates.
 
 ### Presets
 
-A preset selects the initial configuration for your project — which statuses, types, labels, and priorities are available. The preset is applied once at creation time and written to `.mdp/project.json`. After creation, the preset has no further effect; you edit `project.json` directly.
+A preset selects the initial configuration for your project — which statuses, types, labels, and priorities are available. The preset is applied once at creation time and written to `.mdp/settings.json`. After creation, the preset has no further effect; you edit `settings.json` directly.
 
 ```bash
 mdp project create -p . --preset software    # Default - task, bug, feature, chore, spike
@@ -101,7 +101,8 @@ After running these commands, here's what's on disk:
 
 ```
 .mdp/
-├── project.json
+├── settings.json
+├── project.md
 ├── issues/
 │   ├── ISS-1-user-authentication/
 │   │   └── ISS-1-user-authentication.md
