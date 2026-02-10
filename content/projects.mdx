@@ -97,55 +97,6 @@ List all registered projects.
 }
 ```
 
-## Describe Tag
-
-```bash copy
-mdp project tag-describe <tag> -d "description"
-```
-
-Set, view, or remove a tag description. Tag descriptions provide context about what a tag represents (e.g., a company, team, or domain), stored in `~/.mdp/config.json`.
-
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--description <text>` | `-d` | Description text for the tag |
-| `--remove` | | Remove the tag description |
-
-**Modes:**
-- `mdp project tag-describe <tag> -d "text"` — Set or update the description
-- `mdp project tag-describe <tag>` — View the current description
-- `mdp project tag-describe <tag> --remove` — Remove the description
-
-```json
-{
-  "ok": true,
-  "data": {
-    "tag": "acme",
-    "description": "Acme Corp — B2B SaaS for supply chain management"
-  }
-}
-```
-
-## List Tags
-
-```bash copy
-mdp project tag-list
-```
-
-List all known tags with their descriptions and project counts. Includes tags from both project entries and tag descriptions.
-
-```json
-{
-  "ok": true,
-  "data": {
-    "tags": [
-      { "tag": "acme", "description": "Acme Corp — B2B SaaS for supply chain management", "projectCount": 2 },
-      { "tag": "personal", "description": null, "projectCount": 1 }
-    ],
-    "total": 2
-  }
-}
-```
-
 ## Remove Project
 
 ```bash copy
@@ -160,11 +111,11 @@ Remove a registered project path. Does not delete any files — only removes the
 mdp project tag <path> --add <tags>
 ```
 
-Add or remove tags from a registered project.
+Add or remove tags from a registered project. Tags added via `--add` are auto-created in the global tag list (with an empty description) if they don't already exist.
 
 | Flag | Description |
 |------|-------------|
-| `--add <tags>` | Comma-separated tags to add |
+| `--add <tags>` | Comma-separated tags to add (auto-creates missing tags) |
 | `--remove <tags>` | Comma-separated tags to remove |
 
 ## Show Settings
